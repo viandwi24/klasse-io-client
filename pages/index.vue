@@ -1,193 +1,159 @@
 <template>
   <div class="screen">
-    <canvas id="game" />
+    <canvas id="game" width="800" height="400" />
   </div>
 </template>
 
 <script>
 import { defineComponent, onMounted, useContext } from '@nuxtjs/composition-api'
-import { ResourceManager } from '../lib/resource'
-import { Screen } from '../lib/screen'
-import { Game } from '../lib/game'
-import { useFps } from '../lib/game/plugins/fps'
-import { Map } from '../lib/map'
+import { Game, RESOURCE } from '~/lib/game'
+import { useFps } from '~/lib/game/plugins/fps'
 
 export default defineComponent({
-  setup () {
-    const { gameInit } = useGame('canvas#game')
+  setup() {
+    const { $axios } = useContext()
 
-    // lifecycle
-    onMounted(async () => await gameInit())
+    // game update
+    let a = 2
+    const gameUpdate = (context) => {
+      const { map, applyPlugins } = context
+      if (a === 1) return
+      map.draw(context)
+      applyPlugins(context)
+      a++
+    }
 
-    // return
-    return {}
-  }
-})
+    // on mount
+    onMounted(async () => {
+      // Create a new game
+      const canvasEl = document.querySelector('canvas#game')
+      const game = new Game(canvasEl, {}, [useFps])
 
-function useGame (canvasQuerySelector) {
-  // vars
-  const { myCharacterInit, myCharacterUpdate } = useCharacterControl()
-  const vueContext = useContext()
-
-  // game options
-  const options = { fps: 60, targetPixel: { width: 128, height: 128 } }
-
-  // update game per frame
-  const update = (context) => {
-    const { map, applyPlugins, screen } = context
-
-    // logic update
-    myCharacterUpdate(context)
-
-    // clear
-    screen.clear()
-
-    // draw
-    map.draw(context)
-
-    // game plugins
-    applyPlugins(context)
-  }
-
-  //
-  const onWindowRezise = function () {
-    const c = document.querySelector(canvasQuerySelector)
-    c.width = c.clientWidth
-    c.height = c.clientHeight
-  }
-
-  const init = async function () {
-    // console.clear()
-    // canvas
-    window.addEventListener("resize", onWindowRezise)
-    onWindowRezise()
-
-    // prepare
-    const resourceManager = new ResourceManager()
-    const screen = new Screen(document.querySelector(canvasQuerySelector))
-    await resourceManager.load()
-
-
-    // load map
-    const map = new Map(vueContext, resourceManager)
-    await map.loadFromHttp('maps/example_public_map.json')
-
-    // characters init
-    myCharacterInit(resourceManager, map, screen)
-
-    // create game instance
-    const gamePlugins = [ useFps ]
-    const game = new Game(screen, map, update, options, gamePlugins)
-    screen.setTargetPixel(options.targetPixel)
-    game.start()
-
-    // focus
-    screen.focus('my_character')
-  }
-
-  // return
-  return {
-    gameInit: init,
-  }
-}
-
-function useCharacterControl () {
-  // vars
-  let cycleChar = []
-  let frameCycle = 0
-  const speed = 3
-
-  // my character init
-  const myCharacterInit = async (resourceManager, map, screen) =>  {
-    // add character
-    resourceManager.add(
-        "sprite",
-        "my_character",
-        "characters/cute_male.png",
-        {
-          source: {
-            width: 128,
-            height: 128
-          }
-        }
-      )
-    await resourceManager.load()
-    const characterAsset = resourceManager.get('my_character')
-    map.addObject(
-      'my_character',
-      { x: 0, y: 0, width: 128, height: 128, keysMap: [] },
-      characterAsset,
-      99
-    )
-
-    // bind control
-    const keysMap = []
-    document.addEventListener('keydown', (e) => {
-      const character = map.getObject('my_character')
-      keysMap[e.keyCode] = true
-      character.setData({ keysMap })
-    })
-    document.addEventListener('keyup', (e) => {
-      const character = map.getObject('my_character')
-      keysMap[e.keyCode] = false
-      character.setData({ keysMap })
-    })
-  }
-
-  // my character update
-  const myCharacterUpdate = (context) => {
-    const { map, frame } = context
-    const char = map.getObject('my_character')
-    const charData = char.data
-    // const velocity = 15
-
-    //
-    const keysMap = charData.keysMap
-
-    // iddle
-    if (keysMap.length === 0 || !keysMap.find(e => e === true)) {
-      cycleChar = [0, 1]
-    } else {
-      let x = charData.x
-      let y = charData.y
-      const charSize = charData
-      const mapSize = map.getOriginalGameSize()
-      if (keysMap[68] === true) {
-        // right
-        cycleChar = [2, 3]
-        x += speed
-      } else if (keysMap[87] === true) {
-        // up
-        cycleChar = [2, 3]
-        y -= speed
-      } else if (keysMap[65] === true) {
-        // left
-        cycleChar = [4, 5]
-        x -= speed
-      } else if (keysMap[83] === true) {
-        // bottom
-        cycleChar = [8, 9]
-        y += speed
+      // on window resize
+      const onWindowRezise = function () {
+        canvasEl.width = canvasEl.clientWidth
+        canvasEl.height = canvasEl.clientHeight
       }
-      if (x < 0) x = 0
-      if (y < 0) y = 0
-      if (x + charSize.width >= mapSize.width) x = mapSize.width - charSize.width
-      if (y + charSize.height >= mapSize.height) y = mapSize.height - charSize.height
-      char.setData({ x, y })
-    }
+      window.addEventListener("resize", onWindowRezise)
+      onWindowRezise()
 
-    // apply cycle
-    char.asset.scene = cycleChar[frameCycle]
+      // load map
+      await game.map.loadFromHttp($axios, '/map/demo/demo2.json')
 
-    if (frame % 30 === 0) {
-      if (frameCycle >= cycleChar.length-1) frameCycle = -1
-      frameCycle++
-    }
-  }
+      // resource
+      game.resourceManager.add(
+        RESOURCE.SPRITE,
+        'character_femalestaffdark_yellow',
+        '/characters/femalestaffdark_yellow.png'
+      )
+      await game.resourceManager.load()
 
-  return {
-    myCharacterInit,
-    myCharacterUpdate
-  }
-}
+      // add character
+      const state = {
+        direction: 'bottom',
+        scene: 0,
+        x: 230,
+        y: 220,
+        frameCycle: 0,
+        cycleChar: [0, 0, 0],
+        keysMap: [],
+      }
+      game.map.addObject('my_character', state, (context, object, state) => {
+        // UPDATE LOGIC
+        const { map } = context
+        const { keysMap, x, y } = state
+        let { cycleChar } = state
+        const speed = 2.5
+        if (keysMap.length === 0 || !keysMap.find(e => e === true)) {
+          cycleChar = [0, 0, 0]
+          state.cycleChar = cycleChar
+        } else {
+          const w = map.tileSize.width * map.tileOutputSize
+          const h = map.tileSize.height * map.tileOutputSize
+          const mapSize = {
+            width: (map.tileSize.width * map.mapSize.width),
+            height: (map.tileSize.height * map.mapSize.height),
+          }
+          let ax = x
+          let ay = y
+          if (keysMap[68] === true) {
+            // right
+            cycleChar = [9, 10, 11]
+            ax += speed
+          } else if (keysMap[87] === true) {
+            // up
+            cycleChar = [6, 7, 8]
+            ay -= speed
+          } else if (keysMap[65] === true) {
+            // left
+            cycleChar = [3, 4, 5]
+            ax -= speed
+          } else if (keysMap[83] === true) {
+            // bottom
+            cycleChar = [0, 1, 2]
+            ay += speed
+          }
+
+          // collision
+          if (ax < 0) ax = 0
+          if (ay < 0) ay = 0
+          if (ax + w >= mapSize.width * map.tileOutputSize) ax = mapSize.width * map.tileOutputSize - w
+          if (ay + h >= mapSize.height * map.tileOutputSize) ay = mapSize.height * map.tileOutputSize - h
+          const a = map.checkCollision(ax, ay, w, h)
+          if (a) return
+
+          state.cycleChar = cycleChar
+          object.setState({ x:ax, y: ay })
+        }
+      }, (context, object, state) => {
+        // RENDER LOGIC
+        const { canvasContext: ctx, map, frame } = context
+        const { cycleChar, x, y } = state
+        const scene = cycleChar[state.frameCycle]
+
+        //
+        const characterResource = game.resourceManager.get('character_femalestaffdark_yellow')
+        const w = map.tileSize.width * map.tileOutputSize
+        const h = map.tileSize.height * map.tileOutputSize
+        const sY = 0
+        const sX = scene * map.tileSize.width
+        const sW = map.tileSize.width
+        const sH = map.tileSize.height
+
+        // apply cycle
+        ctx.drawImage(
+          characterResource.image,
+          sX, sY, sW, sH,
+          x, y, w, h
+        )
+
+        // frame
+        if (frame % 15 === 0) {
+          if (state.frameCycle >= cycleChar.length-1) state.frameCycle = -1
+          state.frameCycle++
+        }
+      })
+      const keysMap = []
+      document.addEventListener('keydown', (e) => {
+        const character = game.map.getObject('my_character')
+        keysMap[e.keyCode] = true
+        character.setState({ keysMap })
+      })
+      document.addEventListener('keyup', (e) => {
+        const character = game.map.getObject('my_character')
+        keysMap[e.keyCode] = false
+        character.setState({ keysMap })
+      })
+
+      // bind game update
+      game.bindUpdate(gameUpdate)
+
+      // start game
+      game.start()
+      console.log(game.map)
+    })
+    return {}
+  },
+})
 </script>
+
