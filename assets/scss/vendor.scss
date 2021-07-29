@@ -45,3 +45,11 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
+
+// tailwind
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// bootstrap
+@import "~bootstrap/scss/bootstrap.scss";
