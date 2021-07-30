@@ -10,7 +10,8 @@ export default {
 
   // Generate
   generate: {
-    fallback: true
+    dir: 'docs',
+    fallback: true,
   },
 
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
