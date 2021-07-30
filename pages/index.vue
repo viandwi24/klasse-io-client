@@ -4,15 +4,25 @@
       <canvas id="game" width="800" height="400" />
       <div class="players_cam">
         <div class="players_cam__container">
-          <div v-for="(item, i) in registeredPlayer" :key="i" class="players_cam__box">
+          <div v-for="(item, i) in registeredPlayer.filter(e => e.peerCall !== undefined)" :key="i" class="players_cam__box">
             <video :id="`player_video_${item.id}`" class="players_cam__video" autoplay="true" />
             <div class="players_cam__name">{{ item.name }}</div>
           </div>
+          <!-- <div v-for="(item, i) in 20" :key="i" class="players_cam__box">
+            <video :id="`player_video_${item.id}`" class="players_cam__video" autoplay="true" />
+            <div class="players_cam__name">{{ i }}</div>
+          </div> -->
         </div>
       </div>
       <div class="self_cam">
         <div class="self_cam__container">
-          <video id="self_cam__video" autoplay="true" />
+          <video id="self_cam__video" autoplay="true" muted />
+          <div class="self_cam__toggle">
+            <button class="btn btn-sm" :class="{ 'btn-success': !muteAudio, 'btn-danger': muteAudio }" @click="toggleAudio">
+              <font-awesome-icon v-if="muteAudio" :icon="['fas', 'microphone-slash']" />
+              <font-awesome-icon v-else :icon="['fas', 'microphone']" class="mx-1" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -29,9 +39,9 @@
                   </select>
                 </div>
                 <div class="form-group mb-3">
-                  <label for="inputSelectCamera">Pilih Audio</label>
-                  <select id="inputSelectCamera" class="form-control">
-                    <option v-for="(item, i) in inputDeviceInfo.filter((e) => e.kind === 'audioinput')" :key="i" :value="i">{{ item.label }}</option>
+                  <label for="inputSelectAudio">Pilih Audio</label>
+                  <select id="inputSelectAudio" v-model="selectAudio" class="form-control">
+                    <option v-for="(item, i) in audioDevice" :key="i" :value="i">{{ (item.label || 'Default Audio') }}</option>
                   </select>
                 </div>
                 <div class="form-group mb-3">
@@ -73,10 +83,13 @@ export default defineComponent({
     // vars
     const inputDeviceInfo = ref([])
     const cameraDevice = computed(() => inputDeviceInfo.value.filter((e) => e.kind === 'videoinput'))
+    const audioDevice = computed(() => inputDeviceInfo.value.filter((e) => e.kind === 'audioinput'))
     const meetings = ref(['public_room'])
 
     // form
+    const muteAudio = ref(false)
     const selectCamera = ref(0)
+    const selectAudio = ref(0)
     const selectMeetId = ref('public_demo')
     const selectUsername = ref(`guest_${Math.floor(Math.random() * 100) + 1}`)
 
@@ -117,9 +130,6 @@ export default defineComponent({
       // start game
       game.start()
       // console.log(game.map)
-
-      //
-      console.log(context)
     }
     const gameUpdate = (context) => {
       const { map } = context
@@ -145,11 +155,14 @@ export default defineComponent({
             // height: { min: 776, ideal: 720, max: 1080 },
             deviceId: { exact: cameraDevice.value[selectCamera.value].deviceId  },
           }
+          const audioConstraint = {
+            deviceId: { exact: audioDevice.value[selectAudio.value].deviceId  },
+          }
           try {
             gameStart.value = true
             await $sleep(100)
             const video = document.querySelector('.self_cam .self_cam__container video')
-            const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint })
+            const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: audioConstraint })
             socket.localStream = stream
             video.srcObject = stream
             // if (video.mozSrcObject !== undefined) {
@@ -209,18 +222,26 @@ export default defineComponent({
 
       inputDeviceInfo,
       cameraDevice,
+      audioDevice,
       meetings,
 
       players,
       registeredPlayer,
 
+      muteAudio,
       selectCamera,
+      selectAudio,
       selectUsername,
       selectMeetId,
 
       start,
       gameStart,
       startGame,
+
+      toggleAudio: () => {
+        muteAudio.value = !muteAudio.value
+        socket.localStream.getAudioTracks().forEach((track) => { track.enabled = !track.enabled });
+      },
     }
   },
 })
@@ -252,18 +273,55 @@ function useUpdatePlayers(game, socket, players) {
 
   // funcs
   const onPlayerUpdate = (context, object, state) => {
-      const { direction } = state
-      let { cycleChar } = state
-      if (direction === 'bottom') {
-        cycleChar = [0, 0, 0]
-      } else if (direction === 'left') {
-        cycleChar = [3, 3, 3]
-      } else if (direction === 'up') {
-        cycleChar = [6, 6, 6]
-      } else if (direction === 'right') {
-        cycleChar = [9, 9, 9]
-      }
-      object.setState({ cycleChar })
+    // const { map } = context
+    const { direction } = state
+    let { cycleChar } = state
+
+    if (direction === 'bottom') {
+      cycleChar = [0, 0, 0]
+    } else if (direction === 'left') {
+      cycleChar = [3, 3, 3]
+    } else if (direction === 'up') {
+      cycleChar = [6, 6, 6]
+    } else if (direction === 'right') {
+      cycleChar = [9, 9, 9]
+    }
+
+    //
+    // const myChar = map.getObject('my_character')
+    // const radiusView = 100
+    // const isInside = (circleX, circleY, rad, x, y) => {
+    //   if ((x - circleX) * (x - circleX) + (y - circleY) * (y - circleY) <= rad * rad) {
+    //     return true
+    //   } else {
+    //     return false
+    //   }
+    // }
+    // if (isInside(myChar.state.x, myChar.state.y, radiusView, state.x, state.y)) {
+    //   if (!state.calling) {
+    //     state.calling = true
+    //     const peerCall = socket.peerConnection.call(state.id, socket.localStream )
+    //     state.player.peerCall = peerCall
+    //     peerCall.on('stream', (remoteStream) => {
+    //       try {
+    //         const videoEl = document.querySelector(`#player_video_${state.id}`)
+    //         videoEl.srcObject = remoteStream
+    //       } catch (error) {
+    //         console.log(error)
+    //       }
+    //     })
+    //   }
+    // } else {
+    //   // eslint-disable-next-line no-lonely-if
+    //   if (state.calling) {
+    //     state.calling = false
+    //     try { state.player.peerCall.close() } catch (error) {}
+    //     state.player.peerCall = undefined
+    //   }
+    // }
+
+    // s
+    object.setState({ cycleChar })
   }
   const onPlayerRender = (context, object, state) => {
       const { canvasContext: ctx, map, resourceManager, frame } = context
@@ -306,29 +364,7 @@ function useUpdatePlayers(game, socket, players) {
     const { map } = context
 
     // peer
-    const peer = socket.peerConnection.connect(item.id)
     const peerCall = socket.peerConnection.call(item.id, socket.localStream)
-
-    // state
-    const state = {
-      id: item.id,
-      name: item.name,
-      frameCycle: 0,
-      cycleChar: [0, 0, 0],
-      x: item.data.x || 0,
-      y: item.data.y || 0,
-      direction: item.data.direction,
-    }
-    registeredPlayer.value.push({
-      id: item.id,
-      name: item.name,
-      state,
-      player: item,
-      peer,
-      peerCall,
-    })
-
-    //
     peerCall.on('stream', (remoteStream) => {
       try {
         const videoEl = document.querySelector(`#player_video_${item.id}`)
@@ -337,9 +373,26 @@ function useUpdatePlayers(game, socket, players) {
       } catch (error) {
       }
     })
-    peer.on('open', () => {
-      peer.send('halo ini koneksi dari ' + socket.signalClient.id)
+    // console.log(peer)
+
+    // state
+    registeredPlayer.value.push({
+      id: item.id,
+      name: item.name,
+      player: item,
     })
+    const player = registeredPlayer.value.find(e => e.id === item.id)
+    const state = {
+      id: item.id,
+      name: item.name,
+      frameCycle: 0,
+      cycleChar: [0, 0, 0],
+      x: item.data.x || 0,
+      y: item.data.y || 0,
+      direction: item.data.direction,
+      player,
+      calling: false,
+    }
 
 
     //
@@ -366,7 +419,6 @@ function useUpdatePlayers(game, socket, players) {
           const object = game.map.getObject(`character_player_${data.id}`)
           if (object) {
             object.setState({ x: state.x, y: state.y, direction: state.direction })
-            console.log(state.direction)
           }
           break;
       }
@@ -389,7 +441,6 @@ function useUpdatePlayers(game, socket, players) {
         const item = playersWithoutSelf[i]
         playerNewJoin.push(item.id)
         newPlayerJoin(context, item)
-        console.log(registeredPlayer.value)
       }
     }
 
@@ -421,6 +472,9 @@ function useUpdatePlayers(game, socket, players) {
 }
 
 async function useMyCharacter(game, socket, data) {
+  // options
+  const options = { showRadius: true }
+
   // resource
   game.resourceManager.add(
     RESOURCE.SPRITE,
@@ -442,6 +496,31 @@ async function useMyCharacter(game, socket, data) {
     cycleChar: [0, 0, 0],
     keysMap: [],
   }
+
+  // testing
+  // game.map.addObject(
+  //   'obj_test',
+  //   { x: 270, y: 220 },
+  //   () => {},
+  //   (context, object, state) => {
+  //     const { canvasContext: ctx, map } = context
+  //     const x = state.x + map.offset.x
+  //     const y = state.y + map.offset.y
+  //     const w = map.tileSize.width * map.tileOutputSize
+  //     const h = map.tileSize.height * map.tileOutputSize
+  //     const sY = 0
+  //     const sX = 0 * map.tileSize.width
+  //     const sW = map.tileSize.width
+  //     const sH = map.tileSize.height
+
+  //     // apply cycle
+  //     ctx.drawImage(
+  //       characterResource.image,
+  //       sX, sY, sW, sH,
+  //       x, y, w, h
+  //     )
+  //   }
+  // )
 
   // add object
   game.map.offset = {
@@ -538,6 +617,20 @@ async function useMyCharacter(game, socket, data) {
         sX, sY, sW, sH,
         x, y, w, h
       )
+
+      //
+      if (options.showRadius) {
+        const radiusView = 100
+        const circle = {
+          x: x + (w/2),
+          y: y + (h/2)
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'blue'
+        ctx.arc(circle.x, circle.y, radiusView, 0, 2 * Math.PI);
+        ctx.stroke()
+      }
 
       // frame
       if (frame % 15 === 0) {

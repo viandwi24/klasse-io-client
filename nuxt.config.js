@@ -1,10 +1,17 @@
 export default {
+  // Target
+  target: 'static',
+
   // Server
   server: {
     host: process.env.HOST || '0.0.0.0',
     port: process.env.PORT || 3000,
   },
 
+  // Generate
+  generate: {
+    fallback: true
+  },
 
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
@@ -49,13 +56,14 @@ export default {
     '@nuxtjs/composition-api/module',
     // https://tailwindcss.com/docs/guides/nuxtjs
     '@nuxtjs/tailwindcss',
+    // https://www.npmjs.com/package/@nuxtjs/fontawesome
+    '@nuxtjs/fontawesome',
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
-    '@nuxtjs/axios',
-    'vue-web-cam/nuxt',
+    '@nuxtjs/axios'
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
@@ -70,5 +78,13 @@ export default {
         }
       }
     },
+  },
+
+  // fontawesome
+  fontawesome: {
+    icons: {
+      solid: true,
+      brands: true
+    }
   },
 }
