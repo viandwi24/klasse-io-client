@@ -1,4 +1,19 @@
 export default {
+  // Target
+  target: 'static',
+
+  // Server
+  server: {
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.PORT || 3000,
+  },
+
+  // Generate
+  generate: {
+    dir: 'docs',
+    fallback: true,
+  },
+
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
 
@@ -27,6 +42,8 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    '@/plugins/helper.js',
+    '@/plugins/component.js',
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -38,18 +55,37 @@ export default {
     '@nuxtjs/eslint-module',
     // https://composition-api.nuxtjs.org/
     '@nuxtjs/composition-api/module',
+    // https://tailwindcss.com/docs/guides/nuxtjs
+    '@nuxtjs/tailwindcss',
+    // https://www.npmjs.com/package/@nuxtjs/fontawesome
+    '@nuxtjs/fontawesome',
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
-    '@nuxtjs/axios',
+    '@nuxtjs/axios'
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {},
 
-  // Build Configuration: https://go.nuxtjs.dev/config-build
+  // Build Configuration: https://go.nuxtjs.dev/config-buildexport default {
   build: {
-  }
+    extend(config, { isDev, isClient }) {
+      if (isClient) {
+        config.node = {
+          fs: 'empty'
+        }
+      }
+    },
+  },
+
+  // fontawesome
+  fontawesome: {
+    icons: {
+      solid: true,
+      brands: true
+    }
+  },
 }
