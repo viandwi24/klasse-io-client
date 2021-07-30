@@ -14,6 +14,11 @@ export default {
     fallback: true,
   },
 
+  // router
+  router: {
+    base: '/klasse-io-client/'
+  },
+
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
 
