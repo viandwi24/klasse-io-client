@@ -10,7 +10,7 @@ export default {
 
   // Generate
   generate: {
-    dir: 'docs',
+    dir: 'dist',
     fallback: true,
   },
 

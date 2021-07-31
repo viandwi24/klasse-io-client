@@ -108,7 +108,7 @@ export default defineComponent({
     const gameInit = async (data) => {
       // Create a new game
       const canvasEl = document.querySelector('canvas#game')
-      game = new Game(canvasEl, {}, gamePlugins)
+      game = new Game(canvasEl, context, {}, gamePlugins)
 
       // on window resize
       const onWindowRezise = function () {
@@ -119,7 +119,7 @@ export default defineComponent({
       onWindowRezise()
 
       // load map
-      await game.map.loadFromHttp($axios, '/map/demo/demo2.json')
+      await game.map.loadFromHttp($axios, '/map/demo3/demo3.json')
 
       // add character
       await useMyCharacter(game, socket, data)
@@ -134,9 +134,12 @@ export default defineComponent({
       // console.log(game.map)
     }
     const gameUpdate = (context) => {
-      const { map } = context
+      const { map, ctx } = context
       // player update logic
       playersUpdate(context)
+
+      // clear canvas
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
       // draw
       map.draw(context)
@@ -166,6 +169,7 @@ export default defineComponent({
             const video = document.querySelector('.self_cam .self_cam__container video')
             const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: audioConstraint })
             socket.localStream = stream
+            socket.fakeLocalStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraint })
             video.srcObject = stream
             // if (video.mozSrcObject !== undefined) {
             //   video.mozSrcObject = stream
@@ -207,11 +211,10 @@ export default defineComponent({
 
     // lifecylce
     onMounted(async () => {
-      await socketInit()
       await getMediaDevice()
+      await socketInit()
       // await $sleep(100)
       // await start()
-      console.log(process.env)
     })
     onBeforeUnmount(() => {
       if (game) game.stop()

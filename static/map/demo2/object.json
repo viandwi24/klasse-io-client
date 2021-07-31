@@ -1,0 +1,11 @@
+{
+  "objects": [
+    {
+      "type": "character_spawn",
+      "data": {
+        "x": 10,
+        "y": 5
+      }
+    }
+  ]
+}
