@@ -1,7 +1,7 @@
 # Klasse.io
 ![Preview](https://github.com/viandwi24/klasse-io-client/blob/master/static/screenshots/0.png?raw=true)
-[![](https://img.shields.io/github/issues/devoverid/forum?style=flat-square)](https://img.shields.io/github/issues/devoverid/forum?style=flat-square) ![](https://img.shields.io/github/stars/devoverid/forum?style=flat-square)
-![](https://img.shields.io/github/forks/devoverid/forum?style=flat-square) [](http://makeapullrequest.com) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity) [![GitHub Followers](https://img.shields.io/github/followers/viandwi24.svg?style=flat-square&label=Follow&maxAge=2592000)](https://github.com/viandwi24?tab=followers)
+[![](https://img.shields.io/github/issues/viandwi24/klasse-io-client?style=flat-square)](https://img.shields.io/github/issues/viandwi24/klasse-io-client?style=flat-square) ![](https://img.shields.io/github/stars/viandwi24/klasse-io-client?style=flat-square)
+![](https://img.shields.io/github/forks/viandwi24/klasse-io-client?style=flat-square) [](http://makeapullrequest.com) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://GitHub.com/viandwi24/klasse-io-client/graphs/commit-activity) [![GitHub Followers](https://img.shields.io/github/followers/viandwi24.svg?style=flat-square&label=Follow&maxAge=2592000)](https://github.com/viandwi24?tab=followers)
 
 ## What is Klasse.io?
 A group video call with a mix of rpg games. Make the group atmosphere more interactive.
@@ -58,3 +58,20 @@ $ yarn start
 # generate static project
 $ yarn generate
 ```
+
+## Contributors
+<a href="https://github.com/viandwi24/klasse-io-client/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=viandwi24/klasse-io-client"/>
+</a>
+
+## How to contribute
+You can follow the contributing guide listed [here](./CONTRIBUTING.md)
+
+## Donate
+You can support the development of this project at :
+- [Saweria](https://saweria.co/viandwi24)
+- [Trakteer](https://trakteer.id/viandwi24)
+- [Ko-fi](https://ko-fi.com/viandwi24)
+
+## License
+Devover Forum is open-sourced software licensed under the [MIT license](./LICENSE.md).
