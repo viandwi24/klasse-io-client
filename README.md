@@ -74,4 +74,4 @@ You can support the development of this project at :
 - [Ko-fi](https://ko-fi.com/viandwi24)
 
 ## License
-Devover Forum is open-sourced software licensed under the [MIT license](./LICENSE.md).
+**klasse-io-client** is licensed under the [MIT license](./LICENSE.md).
